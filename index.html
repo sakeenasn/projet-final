@@ -1,16 +1,339 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Système Solaire 3D</title>
-  <link rel="stylesheet" href="style.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Système solaire – v6</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/animejs/3.2.1/anime.min.js"></script>
 </head>
-<body>
-  <div id="infoBox"></div>
 
-  <script src="https://cdn.jsdelivr.net/npm/three@0.164.1/build/three.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/three@0.164.1/examples/js/controls/OrbitControls.js"></script>
-  <script src="main.js"></script>
+<body>
+
+  <!-- ===== FOND ETOILÉ FIXE ===== -->
+  <div class="stars-layer"></div>
+
+  <!-- ===== PANNEAU D'INFOS ===== -->
+  <div id="info-panel">
+    <h2 id="planet-name">Clique sur un astre 🌍</h2>
+    <p id="planet-info">Découvre les planètes en cliquant dessus !</p>
+
+    <div class="slider-container">
+      <label for="speed-range">Vitesse :</label>
+      <input type="range" id="speed-range" min="0.2" max="2" step="0.1" value="1">
+      <span id="speed-value">1x</span>
+    </div>
+
+    <div class="slider-container">
+      <label for="zoom-range">Zoom :</label>
+      <input type="range" id="zoom-range" min="0.5" max="2.5" step="0.1" value="1">
+      <span id="zoom-value">1x</span>
+    </div>
+
+    <div class="controls-row">
+      <button id="toggle-sound" class="control-btn">🔊 Son : ON</button>
+      <button id="toggle-system" class="control-btn">⏸️ Pause système</button>
+    </div>
+  </div>
+
+  <!-- ===== SYSTEME SOLAIRE ===== -->
+  <div class="space-container">
+    <div class="space">
+      <div class="sun" data-name="Soleil"></div>
+
+      <div class="planet mercury" data-name="Mercure"></div>
+      <div class="planet venus" data-name="Vénus"></div>
+      <div class="planet earth" data-name="Terre"></div>
+      <div class="planet mars" data-name="Mars"></div>
+      <div class="planet jupiter" data-name="Jupiter"></div>
+
+      <div class="planet saturn" data-name="Saturne">
+        <div class="ring"></div>
+      </div>
+
+      <div class="planet uranus" data-name="Uranus"></div>
+      <div class="planet neptune" data-name="Neptune"></div>
+    </div>
+  </div>
+
+  <!-- ===== CSS ===== -->
+  <style>
+    body {
+      margin: 0;
+      overflow: hidden;
+      background: radial-gradient(circle at center, #000010, #000);
+      font-family: Arial, sans-serif;
+      color: white;
+    }
+
+    /* --- FOND ETOILE --- */
+    .stars-layer {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    .star {
+      position: absolute;
+      width: 2px;
+      height: 2px;
+      background: white;
+      border-radius: 50%;
+      opacity: 0.4;
+      animation: twinkle 3s infinite alternate;
+    }
+
+    @keyframes twinkle {
+      from { opacity: 0.3; }
+      to   { opacity: 1; }
+    }
+
+    /* --- SYSTEME --- */
+    .space-container {
+      width: 100vw;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      position: relative;
+      z-index: 2;
+    }
+
+    .space {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      transform-origin: center center;
+      transition: transform 0.3s ease;
+    }
+
+    .sun {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 100px;
+      height: 100px;
+      background: radial-gradient(circle, #ffcc33, #ff6600);
+      border-radius: 50%;
+      box-shadow: 0 0 40px 20px rgba(255,200,50,0.8);
+      transform: translate(-50%, -50%);
+      cursor: pointer;
+    }
+
+    .planet {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      border-radius: 50%;
+      cursor: pointer;
+    }
+
+    .mercury { width: 10px; height: 10px; background: gray; }
+    .venus   { width: 18px; height: 18px; background: orange; }
+    .earth   { width: 20px; height: 20px; background: deepskyblue; }
+    .mars    { width: 16px; height: 16px; background: red; }
+    .jupiter { width: 35px; height: 35px; background: peru; }
+    .uranus  { width: 26px; height: 26px; background: lightblue; }
+    .neptune { width: 24px; height: 24px; background: royalblue; }
+
+    .saturn {
+      width: 30px;
+      height: 30px;
+      background: khaki;
+      border-radius: 50%;
+      position: relative;
+      z-index: 2;
+    }
+
+    .saturn .ring {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 80px;
+      height: 28px;
+      transform: translate(-50%, -50%) rotate(18deg);
+      border-radius: 50%;
+      background: conic-gradient(
+        rgba(255,255,220,0.35),
+        rgba(220,200,150,0.25),
+        rgba(200,170,120,0.18)
+      );
+      pointer-events: none;
+      z-index: 1;
+      mix-blend-mode: screen;
+    }
+
+    .moon {
+      position: absolute;
+      width: 7px;
+      height: 7px;
+      background: white;
+      border-radius: 50%;
+      box-shadow: 0 0 8px rgba(255,255,255,.8);
+    }
+
+    /* --- PANNEAU --- */
+    #info-panel {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      background: rgba(0,0,0,0.7);
+      border-radius: 10px;
+      padding: 15px;
+      width: 330px;
+      z-index: 3;
+    }
+
+    .slider-container {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 6px;
+      font-size: 13px;
+    }
+
+    .controls-row {
+      display: flex;
+      gap: 10px;
+      margin-top: 10px;
+    }
+
+    .control-btn {
+      padding: 8px 12px;
+      border-radius: 8px;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.2);
+      color: white;
+      cursor: pointer;
+    }
+
+    .control-btn.off {
+      background: rgba(255,0,0,0.15);
+    }
+
+    .control-btn.paused {
+      background: rgba(255,255,255,0.1);
+    }
+  </style>
+
+  <!-- ===== JS ===== -->
+  <script>
+    const planets = document.querySelectorAll(".planet");
+    const sun = document.querySelector(".sun");
+    const space = document.querySelector(".space");
+    const planetOrbits = [];
+
+    let globalSpeed = 1;
+    let zoomLevel = 1;
+    let soundEnabled = true;
+    let systemPaused = false;
+
+    /* --- ETOILES --- */
+    const starsLayer = document.querySelector(".stars-layer");
+    for (let i = 0; i < 300; i++) {
+      const star = document.createElement("div");
+      star.className = "star";
+      star.style.top = Math.random() * 100 + "%";
+      star.style.left = Math.random() * 100 + "%";
+      star.style.animationDuration = (2 + Math.random() * 4) + "s";
+      starsLayer.appendChild(star);
+    }
+
+    /* --- ORBITES --- */
+    function orbit(planet, distance, duration) {
+      const anim = anime({
+        targets: planet,
+        rotate: "1turn",
+        duration,
+        easing: "linear",
+        loop: true,
+        update: a => {
+          const ang = a.progress / 100 * 2 * Math.PI;
+          planet.style.transform = `translate(${Math.cos(ang)*distance}px, ${Math.sin(ang)*distance}px)`;
+        }
+      });
+      planetOrbits.push({ anim, baseDuration: duration });
+    }
+
+    orbit(document.querySelector(".mercury"),100,4000);
+    orbit(document.querySelector(".venus"),150,7000);
+    orbit(document.querySelector(".earth"),210,10000);
+    orbit(document.querySelector(".mars"),260,13000);
+    orbit(document.querySelector(".jupiter"),330,20000);
+    orbit(document.querySelector(".saturn"),400,25000);
+    orbit(document.querySelector(".uranus"),470,30000);
+    orbit(document.querySelector(".neptune"),540,35000);
+
+    /* --- LUNE --- */
+    const earth = document.querySelector(".earth");
+    const moon = document.createElement("div");
+    moon.className = "moon";
+    earth.appendChild(moon);
+
+    const moonAnim = anime({
+      targets: moon,
+      rotate: "1turn",
+      duration: 2500,
+      loop: true,
+      easing: "linear",
+      update: a => {
+        const ang = a.progress / 100 * 2 * Math.PI;
+        moon.style.transform = `translate(${Math.cos(ang)*28}px, ${Math.sin(ang)*28}px)`;
+      }
+    });
+
+    /* --- SLIDERS --- */
+    document.getElementById("speed-range").addEventListener("input", e => {
+      globalSpeed = parseFloat(e.target.value);
+      document.getElementById("speed-value").textContent = globalSpeed + "x";
+      planetOrbits.forEach(o => o.anim.duration = o.baseDuration / globalSpeed);
+    });
+
+    document.getElementById("zoom-range").addEventListener("input", e => {
+      zoomLevel = parseFloat(e.target.value);
+      document.getElementById("zoom-value").textContent = zoomLevel + "x";
+      space.style.transform = `scale(${zoomLevel})`;
+    });
+
+    /* --- SONS --- */
+    const planetSounds = {
+      Soleil:new Audio("sun.mp3"),
+      Mercure:new Audio("mercury.mp3"),
+      Vénus:new Audio("venus.mp3"),
+      Terre:new Audio("earth.mp3"),
+      Mars:new Audio("mars.mp3"),
+      Jupiter:new Audio("jupiter.mp3"),
+      Saturne:new Audio("saturn.mp3"),
+      Uranus:new Audio("uranus.mp3"),
+      Neptune:new Audio("neptune.mp3")
+    };
+
+    function playSound(name) {
+      if (!soundEnabled) return;
+      Object.values(planetSounds).forEach(s => { s.pause(); s.currentTime = 0; });
+      planetSounds[name]?.play().catch(()=>{});
+    }
+
+    planets.forEach(p => {
+      p.addEventListener("click", () => playSound(p.dataset.name));
+    });
+    sun.addEventListener("click", () => playSound("Soleil"));
+
+    /* --- BOUTONS --- */
+    document.getElementById("toggle-sound").onclick = () => {
+      soundEnabled = !soundEnabled;
+      document.getElementById("toggle-sound").textContent =
+        soundEnabled ? "🔊 Son : ON" : "🔇 Son : OFF";
+    };
+
+    document.getElementById("toggle-system").onclick = () => {
+      systemPaused = !systemPaused;
+      planetOrbits.forEach(o => systemPaused ? o.anim.pause() : o.anim.play());
+      systemPaused ? moonAnim.pause() : moonAnim.play();
+    };
+  </script>
 </body>
 </html>
